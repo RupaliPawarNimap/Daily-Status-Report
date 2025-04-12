@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <h1 style="color: red; font-size: 32px; text-align: center;">Quera Posts</h1>
+    <p>
+       <% for(let post of posts){%>
+<h1 style="color: blueviolet;">The username is @ <%= post.username%></h1>
+<h3 style="color: blue;font-style: italic;">The City is <%= post.city%></h3>
+<br>
+<hr>
+       <% }%>
+
+    </p>
+    
+</body>
+</html>
