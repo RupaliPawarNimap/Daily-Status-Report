@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Data</title>
+    <link rel="stylesheet" href="/style.css"> 
+<body>
+    <h1>Quera Data</h1>
+    <p class="post" style="background-color: pink; color: pink;">
+        <%for(let post of posts){%>
+            <h3 style="font-style: italic;" ><%=post.username%></h3>
+            <h3><%=post.content%></h3>
+            <a  href="http://localhost:3000/posts/<%=post.id%>">See In Detail</a>
+            <a href="http://localhost:3000/posts/<%=post.id%>/edit">Edit</a>
+            <form method="post" action="http://localhost:3000/posts/<%=post.id%>?_method=DELETE"><br>
+                <button>Delete post</button>
+            </form>
+<hr>
+       <% }%>
+
+    </p>
+    <a href="http://localhost:3000/posts/new">Create new Post</a>
+</body>
+</html>
