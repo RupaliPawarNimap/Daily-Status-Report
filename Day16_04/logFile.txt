@@ -1,0 +1,12 @@
+
+1744796961002:GET:/api/users/
+1744796974358:POST:/api/users/
+1744796985009:PUT:/api/users/1
+1744796998023:PATCH:/api/users/1
+1744797006294:GET:/api/users/
+1744797126725:::1,GET:/api/users/
+1744797158937:::1,GET:/api/users/
+1744798233922:::1,GET:/api/users/
+1744798293619:::1,GET:/api/users/
+1744800909506:::1,GET:/api/users/1
+1744800987060:::1,POST:/api/users/
