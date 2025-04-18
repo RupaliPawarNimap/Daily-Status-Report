@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pizza Delivery 🍕</title>
+  <style>
+    #spinner {
+      display: none;
+      margin: 20px auto;
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body style="font-family: Arial; text-align: center; margin-top: 50px;">
+  <h1>🍕 Pizza Delivery App</h1>
+
+  <select id="pizzaFlavor" style="padding: 10px; font-size: 18px; margin-bottom: 20px;">
+    <option value="Margherita">Margherita</option>
+    <option value="Pepperoni">Pepperoni</option>
+    <option value="Veggie">Veggie</option>
+    <option value="BBQ Chicken">BBQ Chicken</option>
+    <option value="Paneer Tikka">Paneer Tikka</option>
+  </select>
+  <br>
+
+  <button id="orderButton" style="padding: 10px 20px; font-size: 20px; margin-top: 10px;">Order Pizza</button>
+  <button id="cancelButton" style="padding: 10px 20px; font-size: 20px; margin-top: 10px; display: none;">Cancel Order</button>
+  
+  <div id="spinner"></div>
+  
+  <h2 id="status" style="margin-top: 30px;"></h2>
+
+  <script>
+    let isCancelled = false;
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function randomTime(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    async function orderPizza() {
+      const status = document.getElementById('status');
+      const flavor = document.getElementById('pizzaFlavor').value;
+      const spinner = document.getElementById('spinner');
+      const cancelButton = document.getElementById('cancelButton');
+
+      isCancelled = false;
+      spinner.style.display = 'block';
+      cancelButton.style.display = 'inline-block';
+      
+      status.innerText = `Placing your ${flavor} pizza order... 🍴`;
+      await sleep(2000);
+      if (isCancelled) return cancelOrder();
+
+      status.innerText = `Baking your ${flavor} pizza... 🔥`;
+      await sleep(3000);
+      if (isCancelled) return cancelOrder();
+
+      status.innerText = `Your ${flavor} pizza is on the way! 🚚`;
+      const deliveryTime = randomTime(3000, 7000);
+      await sleep(deliveryTime);
+      if (isCancelled) return cancelOrder();
+
+      spinner.style.display = 'none';
+      cancelButton.style.display = 'none';
+      status.innerText = `Delivered! Enjoy your ${flavor} Pizza! 🎉`;
+    }
+
+    function cancelOrder() {
+      const status = document.getElementById('status');
+      const spinner = document.getElementById('spinner');
+      const cancelButton = document.getElementById('cancelButton');
+
+      spinner.style.display = 'none';
+      cancelButton.style.display = 'none';
+      status.innerText = "Order Cancelled ❌";
+    }
+
+    document.getElementById('orderButton').addEventListener('click', () => {
+      orderPizza();
+    });
+
+    document.getElementById('cancelButton').addEventListener('click', () => {
+      isCancelled = true;
+    });
+  </script>
+</body>
+</html>
