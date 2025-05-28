@@ -4,8 +4,7 @@ const dotenv =require("dotenv");
 const {dbConnect, sequelize} =require("./config/db")
 const route =require("./routes/employeeRoute")
 const filterRoute =require("./routes/filterRoute")
-const User =require("./models/employeemodel")
-
+const paginate =require("./routes/paginatRoute")
 dotenv.config()
 const port =process.env.PORT;
 
@@ -22,8 +21,7 @@ dbConnect();
 sequelize.sync();
 // User.sync({force:true});
 // User.sync({alter:true})
-
-
+ console.log(sequelize.models.User);
 
 // routes
 app.get("/",(req,res)=>{
@@ -31,7 +29,7 @@ app.get("/",(req,res)=>{
 })
 app.use("/",route)
 app.use("/",filterRoute)
-
+app.use("/",paginate)
 
 app.listen(port,()=>{
     console.log("Listening on",port);
