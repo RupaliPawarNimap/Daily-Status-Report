@@ -22,7 +22,7 @@ exports.getUser =async(req,res)=>{
         if(user.length==0){
            return res.status(400).json("no user Exist")
         }
-        res.status(201).json({msg:"user found Successfully",user:user})
+        res.status(200).json({msg:"user found Successfully",user:user})
 
     }
      catch(err){
@@ -50,7 +50,7 @@ exports.deleteUser =async(req,res)=>{
     try{
         let user =await User.findByPk(req.params.id);
 
-        if(user.length==0){
+        if(!user||user.length==0){
            return res.status(400).json("no user Exist")
         }
         let deleteUSer =await user.destroy()
