@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Hello World </h1>
+    <script>
+        let defaultSocket =io();
+        defaultSocket.on("default",(data)=>{
+            document.write(data.msg)
+        })
+        let adminsocket =io("/admin");
+        adminsocket.on("welcome",(data)=>{
+            document.write(data.msg)
+        })
+    </script>
+
+</body>
+</html>
