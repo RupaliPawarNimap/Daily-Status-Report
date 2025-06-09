@@ -1,7 +1,7 @@
 const {DataTypes, Sequelize} =require("sequelize")
 const {sequelize} =require("../config/db")
 const bcrypt =require("bcrypt")
-const { USE } = require("sequelize/lib/index-hints")
+ 
 
 const User =sequelize.define("User",{
     id:{
@@ -32,7 +32,7 @@ const User =sequelize.define("User",{
     }
 
 })
-Sequelize.sync()
+ 
 User.beforeCreate(async(user)=>{
     user.password =await bcrypt.hash(user.password,10)
     console.log(user.password);

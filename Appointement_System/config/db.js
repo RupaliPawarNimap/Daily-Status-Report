@@ -16,6 +16,6 @@ catch(err){
    
 }
 
-
+sequelize.sync({force:false})
 module.exports ={dbconnet,sequelize}
 
