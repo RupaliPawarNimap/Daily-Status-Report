@@ -12,6 +12,9 @@ Appointements.belongsTo(User,{foreignKey:"scheduled_by" , as :"Creater"})
 
 Appointements.hasMany(Appointement_Attendace,{foreignKey:"appointement_id",as :"Attendece"})
 Appointement_Attendace.belongsTo(Appointements,{foreignKey:"appointement_id",as :"Appointements"})
+User.hasMany(Appointement_Attendace,{foreignKey:"developer_id",as: "attendences"})
+Appointement_Attendace.belongsTo(User,{foreignKey:"developer_id",as:"developer"})
+
 
 
 User.hasMany(BlockedUser,{foreignKey:"blocked_by",as :"blockList"});
@@ -22,12 +25,11 @@ BlockedUser.belongsTo(User,{foreignKey:"blocked_User",as:"Blocked"})
 
 
 
-User.hasMany(Appointement_Attendace,{foreignKey:"developer_id",as: "attendences"})
-Appointement_Attendace.belongsTo(User,{foreignKey:"developer_id",as:"developer"})
-
+ 
 module.exports = {
   User,
   Role,
   Appointements,
-  Appointement_Attendace,BlockedUser
+  Appointement_Attendace,
+  BlockedUser
 };
