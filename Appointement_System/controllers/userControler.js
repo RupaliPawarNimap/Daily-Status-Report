@@ -10,7 +10,10 @@ exports.createUser =async(req,res)=>{
         return res.status(201).json({msg:"User Creaated Successully",user:user})
     }
     catch(err){
-        return res.status(500).json({msg:"Internal Server Error",err:err.message})
+    if(err.name=="SequelizeUniqueConstraintError"){
+        return res.status(400).json("Email Already Exist")
+    }
+        return res.status(500).json({msg:"Internal Server Error",err:err.message,name:err.name})
     }
 }
 

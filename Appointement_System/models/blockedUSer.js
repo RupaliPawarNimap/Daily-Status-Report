@@ -9,11 +9,19 @@ const BlockedUser =sequelize.define("BlockedUser",{
     },
     blocked_by:{
         type:DataTypes.INTEGER,
-        allowNull:false
+        allowNull:false,
+        validate:{
+            isInt:{args:true,msg:"Blocked By Must be Integer"},
+            notEmpty:{msg:"Blocked By Must Be Required"}
+        }
     },
     blocked_User :{
         type:DataTypes.INTEGER,
-        allowNull:false
+        allowNull:false,
+        validate:{
+            isInt:{args:true,msg:"Blocked By Must be Integer"},
+            notEmpty:{msg:"Blocked By Must Be Required"}
+        }
     }
 },{
     timestamps:true,

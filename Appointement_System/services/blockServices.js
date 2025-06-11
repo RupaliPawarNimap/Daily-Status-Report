@@ -6,28 +6,40 @@ exports.createUser =async(data)=>{
 
 exports.getBlockedUser=async()=>{
     return await BlockedUser.findAll({
-        include:{
+        include:[{
             model:User,
             as:"Blocker",
-            attributes:["name"]
+            attributes:["id","name"]
+        },{
+            model:User,
+            as:"Blocked",
+            attributes:["id","name"]
+            
         }
+    ]
     })
 }
 
 
 exports.getBlockedUserByID=async(id)=>{
     return await BlockedUser.findByPk(id,{
-        include:{
+         include:[{
             model:User,
             as:"Blocker",
-            attributes:["name"]
+            attributes:["id","name"]
+        },{
+            model:User,
+            as:"Blocked",
+            attributes:["id","name"]
+            
         }
+    ]
     })
 }
 
 
 exports.updateBlockedUSer =async(id,data)=>{
-    let blockedUser =await blockUser.findByPk(id);
+    let blockedUser =await BlockedUser.findByPk(id);
     if(!blockedUser){
         return "No Any user Blocked"
     }
@@ -35,5 +47,5 @@ exports.updateBlockedUSer =async(id,data)=>{
 }
 
 exports.deleteBlockedUSer =async(id)=>{
-    return await BlockedUser.destroy({where:id})
+    return await BlockedUser.destroy({where:{id}})
 }

@@ -18,8 +18,8 @@ exports.createBlockUser =async(req,res)=>{
 exports.getAllBlockUser =async(req,res)=>{
     try{
 
-        let Blockuser =await blockedUSer.getBlockedUser(req.body);
-        if(Blockuser.length==0 || !Blockuser){
+        let Blockuser =await blockedUSer.getBlockedUser();
+        if( !Blockuser){
             return res.status(404).json({msg:"Failed To Fetch Block User"})
         }
         return res.status(200).json({msg:' Blocked User  Fetched Successfully',Blocked:Blockuser})
@@ -32,7 +32,7 @@ exports.getAllBlockUser =async(req,res)=>{
 exports.getBlockUserById =async(req,res)=>{
     try{
 
-        let Blockuser =await blockedUSer.getBlockedUserByID(req.body);
+        let Blockuser =await blockedUSer.getBlockedUserByID(req.params.id);
         if(!Blockuser){
             return res.status(404).json({msg:"Failed To Fetch Block User"})
         }
@@ -45,11 +45,11 @@ exports.getBlockUserById =async(req,res)=>{
 exports.deleteBlockedUser =async(req,res)=>{
     try{
 
-        let Blockuser =await blockedUSer.deleteBlockedUSer(req.body);
+        let Blockuser =await blockedUSer.deleteBlockedUSer(req.params.id);
         if(!Blockuser){
             return res.status(404).json({msg:"Failed To delete Block User"})
         }
-        return res.status(200).json({msg:' Blocked User Deleted Successfully',Blocked:Blockuser})
+        return res.status(200).json({msg:' Blocked User Deleted Successfully'})
     }
     catch(err){
         return res.status(500).json({msg:"Internal Server Error",err:err.message})
@@ -59,7 +59,7 @@ exports.deleteBlockedUser =async(req,res)=>{
 exports.UpdateBlockedUser =async(req,res)=>{
     try{
 
-        let Blockuser =await blockedUSer.updateBlockedUSer(req.body);
+        let Blockuser =await blockedUSer.updateBlockedUSer(req.params.id,req.body);
         if(!Blockuser){
             return res.status(404).json({msg:"Failed To Update Block User"})
         }

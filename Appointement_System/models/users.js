@@ -12,22 +12,46 @@ const User =sequelize.define("User",{
     },
     name:{
         type :DataTypes.STRING,
-        allowNull:false
+        allowNull:false,
+        validate:{
+            len:{
+               args: [3,15],
+               msg:"Name must betweeen 3 to 5 length long"
+            },
+            notEmpty:{msg:"Name is Required"}
+        }
     },
     email:{
         type:DataTypes.STRING,
-        unique:true,
-        allowNull:false
+        unique:{msg:"Mail Must Be unique"},
+        allowNull:false,
+        validate:{
+            notEmpty:{msg:"Mail Must Be Required"},
+            isEmail:{msg:"Must Be In Email Format"}
+        }
 
     },
     password:{
         type:DataTypes.STRING,
-        allowNull:false
+        allowNull:false,
+        validate:{
+            notEmpty:{msg:"Must Add Password"},
+            len:{
+                args:[6,100],
+                msg:"Password Must be of 6 characheter"
+            }
+        }
 
     },
     role_id:{
         type:DataTypes.INTEGER,
-        allowNull:false
+        allowNull:false,
+        validate:{
+            isIn:{
+                args:[[1,6]],
+                msg:"Id must be 1 (manger)or 6(Developer) only"
+            }
+        }
 
     }
 

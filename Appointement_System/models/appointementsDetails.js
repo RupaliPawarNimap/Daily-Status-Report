@@ -11,18 +11,27 @@ const Appointement_Attendace =sequelize.define("Appointement_Attendance",{
     },
     developer_id:{
         type:DataTypes.INTEGER,
-        allowNull:false
+        allowNull:false,
+        validate:{
+            notEmpty:{msg:"Developer id must be Required"},
+            isInt:{msg:"Must be Interge"}
+        }
     },
     appointement_id:{
         type:DataTypes.INTEGER,
-        allowNull:false
+        allowNull:false,
+         validate:{
+            notEmpty:{msg:"Developer id must be Required"},
+            isInt:{msg:"Must be Interger"}
+        }
     },
     status:{
         type:DataTypes.ENUM("Pending","Rejected","Accepted"),
         defaultValue:"Pending"
     },response_at:{
         type:DataTypes.DATE,
-        defaultValue:DataTypes.NOW
+        defaultValue:DataTypes.NOW,
+      
     }
 },
 {
