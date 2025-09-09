@@ -40,7 +40,7 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(404).json({ msg: "Email not found, please register" });
     }
-console.log(user);
+// console.log(user);
      
     let checkpsd = await bcrypt.compare(password, user.password);
     if (!checkpsd) {
@@ -67,7 +67,7 @@ console.log(user);
 
 const getAllUser =async(req,res)=>{
     try{
-        console.log(req);
+        // console.log(req);
         // console.log(req.path,req.baseurl,req.method);
         let user =await User.findAll();
         if(user.length==0){

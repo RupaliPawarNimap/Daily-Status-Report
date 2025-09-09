@@ -27,4 +27,6 @@ const getAppointementDetails =async(req,res)=>{
     
 }
 
+
+
 module.exports={getAppointementDetails}

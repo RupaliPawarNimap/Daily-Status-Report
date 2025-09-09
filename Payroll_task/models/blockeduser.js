@@ -12,4 +12,6 @@ const BlockedUsers = sequelize.define("BlockedUsers", {
   },
 });
 
+// BlockedUsers.sync({alter:true})
+
 module.exports = { BlockedUsers };

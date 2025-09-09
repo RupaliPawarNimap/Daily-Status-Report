@@ -27,13 +27,19 @@ Appointment.belongsToMany(User,{through:AppointmentAttendees,foreignKey:"appoint
 
 User.belongsToMany(User, {through: BlockedUsers,as: "Blocked", foreignKey: "blocked_by",otherKey: "blocked_user",});
 User.belongsToMany(User, {  through: BlockedUsers,  as: "BlockedBy",   foreignKey: "blocked_user",  otherKey: "blocked_by",});
- 
-// Direct associations for the join table
+  
 AppointmentAttendees.belongsTo(Appointment, { foreignKey: "appointment_id" });
 AppointmentAttendees.belongsTo(User, { foreignKey: "user_id" });
 
 Appointment.hasMany(AppointmentAttendees, { foreignKey: "appointment_id" });
 User.hasMany(AppointmentAttendees, { foreignKey: "user_id" });
+ 
+ 
+BlockedUsers.belongsTo(User, { foreignKey: "blocked_by", as: "BlockedBy" });
+BlockedUsers.belongsTo(User, { foreignKey: "blocked_user", as: "Blocked" });
+
+User.hasMany(BlockedUsers, { foreignKey: "blocked_by", as: "BlockedUsersBy" });
+User.hasMany(BlockedUsers, { foreignKey: "blocked_user", as: "BlockedUsersOf" });
 
 // sequelize.sync({alter:true})
 module.exports={User,Role,RolePermission,Permission,Appointment,AppointmentAttendees,BlockedUsers}
