@@ -1,6 +1,11 @@
-const { where } = require("sequelize");
+const { where ,Op} = require("sequelize");
 const {sequelize}=require("../config/db")
-const {sendMail,transporter} =require("../utils/sendemail")
+const { transporter} =require("../utils/sendemail")
+const { Parser } = require("json2csv");
+const path = require("path");
+const fs = require("fs");
+const xlsx=require("xlsx")
+ 
  
 const {Appointment,AppointmentAttendees,BlockedUsers,User} =require("../models/index")
  
@@ -125,8 +130,14 @@ const getAppointmentsByDate = async (req, res) => {
       order: [["start_time", "ASC"]],
     });
 
+    if(appointments.length==0){
+      return res.status(404).json({msg:"No Any Appointement Found"})
+    }
+  
     return res.status(200).json({
+          
       msg: "Appointments filtered by date successfully",
+      count:appointments.length,
       data: appointments,
     });
   } catch (err) {
@@ -169,7 +180,6 @@ return res.status(200).json({msg:"Details Fetached Successfully",details:details
 const updateAppointment=async(req,res)=>{
 
 }
-// controllers/appointmentController.js
  
  
 
@@ -228,7 +238,129 @@ deletedAppointment = { appointment: aptcheck, aptDeatils };
    }
 };
 
-module.exports = { createAppointment ,getAllApt,getAptById,getAppointmentsByDate,deleteAppointment,updateAppointment};
+const getAppointementStatus=async(req,res)=>{
+  try{
+    let status =req.query.status
+    console.log(status);
+    if(!status){
+      return res.status(404).json({msg:"Provide the Status "})
+    }
+    if(!["completed","cancelled","scheduled"].includes(status)){
+      return res.status(404).json({msg:"Provide Valid Status-Completed ,cancelled,scheduled"})
+    }
+    let appointement=await Appointment.findAll({where:{
+      status:status
+    },
+    include:[{
+      model:User,
+      as:"creator",
+      attributes:["first_name","last_name","email"]
+
+    },{
+      model:User,
+      attributes:["first_name","last_name","email"],
+      through:{
+        attributes:[]
+      }
+    }]
+  })
+    if(!appointement){
+      return res.status(404).json({msg:"Appointment not Exist with that status"})
+    }
+    return res.status(200).json({msg:`Appointment Fetched Successfully for ${status}`,Appointment:appointement})
+
+  }
+   catch(err){
+    return res.status(500).json({msg:"Internal Server Error",err:err.message})
+  }
+}
+
+ 
+ 
+ 
+
+const exportAppointments = async (req, res) => {
+  try {
+    let { startDate, endDate, status } = req.query;
+
+    // Build filter object
+    let where = {};
+    if (startDate && endDate) {
+      where.start_time = { [Op.gte]: new Date(startDate) };
+      where.end_time = { [Op.lte]: new Date(endDate) };
+    }
+
+    if (status && ["scheduled", "completed", "cancelled"].includes(status)) {
+      where.status = status;
+    }
+ let appointments = await Appointment.findAll({
+  where,
+  include: [
+    {
+      model: User,
+      as: "creator",
+      attributes: ["first_name", "last_name", "email"],
+    },
+    {
+      model: User,
+      as: "attendees", // <-- specify alias here
+      attributes: ["first_name", "last_name", "email"],
+      through: {
+        attributes: ["response", "responded_at"],
+      },
+    },
+  ],
+});
+
+    if (!appointments || appointments.length === 0) {
+      return res.status(404).json({ msg: "No appointments found for given filter" });
+    }
+
+    // Convert appointments data into CSV-friendly format
+    let data = [];
+appointments.forEach((apt) => {
+  apt.attendees.forEach((attendee) => { // <-- use 'attendees'
+    data.push({
+      appointment_id: apt.id,
+      title: apt.title,
+      start_time: apt.start_time,
+      end_time: apt.end_time,
+      status: apt.status,
+      location: apt.location,
+      meeting_link: apt.meeting_link,
+      creator_name: `${apt.creator.first_name} ${apt.creator.last_name}`,
+      attendee_name: `${attendee.first_name} ${attendee.last_name}`,
+      attendee_email: attendee.email,
+      response: attendee.AppointmentAttendees.response,
+      responded_at: attendee.AppointmentAttendees.responded_at,
+    });
+  });
+});
+
+
+    // Create Excel file
+    const workbook = xlsx.utils.book_new();
+    const worksheet = xlsx.utils.json_to_sheet(data);
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Appointments");
+
+    const filePath = path.join(__dirname, "..", "uploads", `Appointments_${Date.now()}.xlsx`);
+    xlsx.writeFile(workbook, filePath);
+
+    return res.status(200).json({
+      msg: "Appointments exported successfully",
+      filePath: `/uploads/${path.basename(filePath)}`,
+      totalRecords: data.length,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Internal Server Error", err: err.message });
+  }
+};
+
+ 
+
+
+module.exports = { createAppointment ,getAllApt,getAptById,exportAppointments,getAppointmentsByDate,deleteAppointment,updateAppointment,getAppointementStatus};
 
 
  

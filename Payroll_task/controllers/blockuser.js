@@ -38,7 +38,7 @@ const getAllBlockUser =async(req,res)=>{
             }]
         })
         if(!user || user.length==0){
-            return res.status(400).json({msg:"Failed To Fetch The Blocked User Data"})
+            return res.status(400).json({msg:"No Any Users are Blocked"})
         }
                     return res.status(400).json({msg:" Fetched The Blocked User Data",BlockUser:user})
 

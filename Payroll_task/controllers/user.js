@@ -1,6 +1,7 @@
 const {User, Role} =require("../models/index");
 const bcrypt =require("bcrypt")
-const jwt =require("jsonwebtoken")
+const jwt =require("jsonwebtoken");
+const { sequelize } = require("../config/db");
 require("dotenv").config();
 
 
@@ -32,38 +33,7 @@ const createUser =async(req,res)=>{
         return res.status(500).json({msg:"Internal Server Error",err:err.message})
     }
 }
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
  
-    let user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(404).json({ msg: "Email not found, please register" });
-    }
-// console.log(user);
-     
-    let checkpsd = await bcrypt.compare(password, user.password);
-    if (!checkpsd) {
-      return res.status(400).json({ msg: "Invalid password" });
-    }
-
-     
-    let token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role_id: user.role_id,
-        is_active: user.is_active,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    return res.status(200).json({ msg: "User login successful", token });
-  } catch (err) {
-    return res.status(500).json({ msg: "Internal server error", err: err.message });
-  }
-};
 
 const getAllUser =async(req,res)=>{
     try{
@@ -89,7 +59,10 @@ const getuserbyId = async (req, res) => {
         if (!id) {
             return res.json({ msg: "plz provide the id in params" })
         }
-        let user = await User.findByPk(id);
+        let user = await sequelize.query(`select * from users where id =:id`,{
+            replacements:{id},
+            type:sequelize.QueryTypes.SELECT
+        });
         if (!user || user.length == 0) {
             return res.json({ msg: "User not found" })
         }
@@ -135,7 +108,7 @@ const updateUser = async (req, res) => {
 
     return res.status(200).json({
       msg: "User updated successfully",
-      data: user,
+      user: user,
     });
   } catch (err) {
     return res.status(500).json({
@@ -152,21 +125,23 @@ const deleteUser =async(req,res)=>{
     try{
        let id = req.params.id;
         if (!id) {
-            return res.json({ msg: "Plz provide id" })
+            return res.status(400).json({ msg: "Plz provide id" })
         }
-        let user = await User.findByPk(id);
+        let user = await User.sequelize.query(`select * from users where id =id`);
         if (!user) {
-            return res.json({ msg: "User not found" })
+            return res.status(404).json({ msg: "User not found" })
         }
         let deleteUser =await User.destroy({where:{id}})
         if(!deleteUser){
-            return res.json({msg:"Failed To delete user"})
+            return res.status(400).json({msg:"Failed To delete user"})
         }
-        return res.json({msg:"User deleted Successully"})
+        return res.status(200).json({msg:"User deleted Successully"})
     }
     catch(err){
-        return res.json({msg:"Something went wrong",err:err.message})
+        return res.status(500).json({msg:"Something went wrong",err:err.message})
     }
 }
 
-module.exports ={createUser,getAllUser,login,deleteUser,updateUser,getuserbyId}
+
+
+module.exports ={createUser,getAllUser,deleteUser,updateUser,getuserbyId}

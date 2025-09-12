@@ -1,5 +1,9 @@
 const {transporter} =require("../utils/sendemail")
 const {User} =require("../models/index")
+const bcrypt=require("bcrypt")
+const jwt =require("jsonwebtoken")
+ 
+const {redisClient} =require("../config/redis")
 
 
  const generateOtp=()=>{
@@ -65,5 +69,59 @@ return res.status(400).json({msg:"Plz Provide valid Otp"})
     }
 }
 
+ 
+const logout = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.split(" ")[1];    
 
-module.exports ={forgotPass,resetPass}
+    const decoded = jwt.decode(token);         
+    const exp = decoded.exp;
+    const now = Math.floor(Date.now() / 1000);
+    const ttl = exp - now;
+
+     
+    await redisClient.setEx(`blacklist:${token}`, ttl, "true");
+
+    return res.status(200).json({ msg: "Logout successful" });
+  } catch (err) {
+    return res.status(500).json({ msg: "Internal server error", err: err.message });
+  }
+};
+
+
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+ 
+    let user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ msg: "Email not found, please register" });
+    }
+// console.log(user);
+     
+    let checkpsd = await bcrypt.compare(password, user.password);
+    if (!checkpsd) {
+      return res.status(400).json({ msg: "Invalid password" });
+    }
+
+     
+    let token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role_id: user.role_id,
+        is_active: user.is_active,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    return res.status(200).json({ msg: "User login successful",  first_name:user.first_name,role:user.role_name,token:token});
+  } catch (err) {
+    return res.status(500).json({ msg: "Internal server error", err: err.message });
+  }
+};
+
+
+module.exports ={forgotPass,resetPass,login,logout}

@@ -1,7 +1,8 @@
 const jwt =require("jsonwebtoken");
 const { json } = require("sequelize");
+const {redisClient} =require("../config/redis")
 
-const checkAuth =(req,res,next)=>{
+const checkAuth =async(req,res,next)=>{
 
     try{
     const authHeader =req.headers.authorization
@@ -11,6 +12,10 @@ const checkAuth =(req,res,next)=>{
     let token=authHeader.split(" ")[1];
     if(!token){
         return res.status(401).json({msg:"Token Missing"})
+    }
+     const isBlacklisted = await redisClient.get(`blacklist:${token}`);
+    if (isBlacklisted) {
+      return res.status(401).json({ msg: "Token has been logged out" });
     }
     let decode =jwt.verify(token,process.env.JWT_SECRET);
     if(!decode){

@@ -9,7 +9,8 @@ const { Appointment } = require("./appointement");
 const { AppointmentAttendees } = require("./appointementAttendess");
 const {BlockedUsers} =require("./blockeduser");
 const { sequelize } = require("../config/db");
-
+const {BulkUpload} =require("./bulkUploads");
+ 
 
 Role.hasMany(User,{foreignKey:"role_id"});
 User.belongsTo(Role,{foreignKey:"role_id"})
@@ -22,7 +23,7 @@ User.hasMany(Appointment,{foreignKey:"created_by"})
 Appointment.belongsTo(User,{foreignKey:"created_by",as:"creator"})
 
 User.belongsToMany(Appointment,{through:AppointmentAttendees,foreignKey:"user_id",otherKey:"appointment_id"});
-Appointment.belongsToMany(User,{through:AppointmentAttendees,foreignKey:"appointment_id",otherKey:"user_id"})
+Appointment.belongsToMany(User,{through:AppointmentAttendees,foreignKey:"appointment_id",otherKey:"user_id",as: "attendees"})
  
 
 User.belongsToMany(User, {through: BlockedUsers,as: "Blocked", foreignKey: "blocked_by",otherKey: "blocked_user",});
@@ -42,4 +43,4 @@ User.hasMany(BlockedUsers, { foreignKey: "blocked_by", as: "BlockedUsersBy" });
 User.hasMany(BlockedUsers, { foreignKey: "blocked_user", as: "BlockedUsersOf" });
 
 // sequelize.sync({alter:true})
-module.exports={User,Role,RolePermission,Permission,Appointment,AppointmentAttendees,BlockedUsers}
+module.exports={User,Role,RolePermission,Permission,Appointment,AppointmentAttendees,BlockedUsers,BulkUpload}
