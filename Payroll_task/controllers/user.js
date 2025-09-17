@@ -78,9 +78,17 @@ const getuserbyId = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { first_name, last_name, email, is_active, role_id } = req.body;
+    const id  = parseInt(req.params.id);
+   
+   
+    const { first_name, last_name, email, is_active, role_name } = req.body;
     const user = await User.findByPk(id);
+
+    console.log(user.id,req.user.id);
+      if(parseInt(req.user.id) !==req.user.id){
+        return res.status(401).json({msg:"U cannot update the user"})
+    }
+
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }   
@@ -90,11 +98,20 @@ const updateUser = async (req, res) => {
         return res.status(400).json({ msg: "Email already in use by another user" });
       }
     }
-    if (role_id) {
-      const roleExists = await Role.findByPk(role_id);
-      if (!roleExists) {
+    if (role_name) {
+         
+      if (req.user.role_name === "Developer") {
+        return res.status(403).json({ msg: "You are not allowed to change roles" });
+      }
+        let role =await Role.findOne({where:{
+            role_name:role_name
+        }})
+    //   const roleExists = await Role.findByPk(role_id);
+    
+      if (!role) {
         return res.status(400).json({ msg: "Invalid role_id, role does not exist" });
       }
+      user.role_id =role.id
     }
 
    
@@ -102,7 +119,8 @@ const updateUser = async (req, res) => {
     user.last_name = last_name ?? user.last_name;
     user.email = email ?? user.email;
     user.is_active = typeof is_active === "boolean" ? is_active : user.is_active;
-    user.role_id = role_id ?? user.role_id;
+ user.role_name=role_name?? user.role_name,
+ 
 
     await user.save();
 

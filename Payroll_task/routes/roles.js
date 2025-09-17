@@ -5,7 +5,7 @@ const { checkPermission } = require("../middleware/checkPermission");
 const router =express.Router();
 
 
-router.post("/roles",createRole)
+router.post("/roles",checkAuth,checkPermission,createRole)
 router.get("/roles",checkAuth,checkPermission,getAllRole)
 
 

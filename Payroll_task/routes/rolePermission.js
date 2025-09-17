@@ -1,10 +1,12 @@
 const {createRolePermission, getAllRolePermmision} =require("../controllers/rolePermission")
 const express =require("express");
+const { checkAuth } = require("../middleware/checkauth");
+const { checkPermission } = require("../middleware/checkPermission");
 const router =express.Router();
 
 
-router.post("/rolepermissions",createRolePermission)
-router.get("/rolepermissions",getAllRolePermmision)
+router.post("/rolepermissions",checkAuth,checkPermission,createRolePermission)
+router.get("/rolepermissions",checkAuth,checkPermission,getAllRolePermmision)
 
 
 module.exports=router

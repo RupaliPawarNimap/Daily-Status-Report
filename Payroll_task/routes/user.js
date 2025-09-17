@@ -10,8 +10,8 @@ router.post("/users",createUser);
 router.get("/users",checkAuth,getAllUser)
  
 router.delete("/users/:id",checkAuth,checkPermission,deleteUser);
-router.put("/users/:id",updateUser);
-router.get("/users/:id"/*checkAuth,checkPermission*/,getuserbyId)
+router.put("/users/:id",checkAuth,updateUser);
+router.get("/users/:id",checkAuth,checkPermission,getuserbyId)
 
 
 module.exports=router

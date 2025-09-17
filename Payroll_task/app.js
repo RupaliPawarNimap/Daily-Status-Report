@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const port = 3000
 const path =require("path")
+const { swaggerUi, swaggerSpec } = require("./config/swagger");
 const {dbConnect}=require("./config/db");
 const roleRoute = require('./routes/roles');
 const userRoute =require("./routes/user")
@@ -12,6 +13,7 @@ const appointementsRoute =require("./routes/appointement")
 const aptDeatils=require("./routes/appointementAttendees")
 const blockRoute =require("./routes/blockuser")
 const bulkuploadRoute =require("./routes/bulkupload")
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const morgan =require("morgan")
 app.use(morgan("dev"))

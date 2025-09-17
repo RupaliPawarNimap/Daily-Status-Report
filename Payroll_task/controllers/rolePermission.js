@@ -12,6 +12,14 @@ const createRolePermission =async(req,res)=>{
       if(!checkPermission_id){
         return res.status(400).json({msg:"Permission Not Found"})
       }
+      let check =await RolePermission.findAll({where:{
+        role_id:role_id,
+        permission_id
+
+      }})
+      if(check){
+        return res.status(400).json({msg:"Already Exist The Access"})
+      }
     let rolePermission =await RolePermission.create({role_id,permission_id})
     if(!rolePermission){
         return re.status(400).json({msg:"Failed To Create Rolepermission"})

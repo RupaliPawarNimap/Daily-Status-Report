@@ -3,18 +3,24 @@
 const {AppointmentAttendees, User, Appointment}=require("../models/index")
 
 const getAppointementDetails =async(req,res)=>{
+
+
     try{
+      
         let details =await AppointmentAttendees.findAll({
 
              include:{
                     model:Appointment,
+
                     attributes:["start_time","end_time","location"],
                     include:{
                 model:User,
-                attributes:["first_name","last_name"],
-                attributes:[]
+                as:"creator",
+                attributes:["first_name","last_name","email","id"],
+                 
                 
             }
+            
                 }
              
         })
@@ -26,7 +32,7 @@ const getAppointementDetails =async(req,res)=>{
     }
     
 }
-
+//update the response of appointemnt
 const updateappointementResponse =async(req,res)=>{
     try{
 const {response }=req.body
@@ -39,7 +45,7 @@ if(!["accepted","declined"].includes(response)){
     return res.status(404).json({msg:"Add Valid Response -Accepted or Declined"});
 
 }
-console.log("id",id,req.user.id);
+// console.log("id",id,req.user.id);  
 let apt =await AppointmentAttendees.findOne({
     where:{
         appointment_id:id,
@@ -60,7 +66,7 @@ return res.status(500).json({msg:"Internal Server Error",err:err.message})
     }
 
 }
-
+//to get the response of attendees  who created appointemnt for them 
 const getresponseOfAttendee =async(req,res)=>{
     try{
         let response =req.query.response
@@ -104,7 +110,7 @@ return res.status(200).json({msg:`Appintement Found with ${response}`,Appointmen
 
 }
 catch(er){
-    return 
+    return res.status(500).json({msg:"Internal server Error",err:er.message})
 }
 
 
