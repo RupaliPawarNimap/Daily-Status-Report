@@ -1,6 +1,9 @@
 
 
 const {AppointmentAttendees, User, Appointment}=require("../models/index")
+const xlsx = require("xlsx");
+const path = require("path");
+
 
 const getAppointementDetails =async(req,res)=>{
 
@@ -8,20 +11,28 @@ const getAppointementDetails =async(req,res)=>{
     try{
       
         let details =await AppointmentAttendees.findAll({
+ 
+      include: [
+        {
+          model: User,  
+          attributes: ["first_name", "last_name", "email"],
+        },
+        {
+          model: Appointment,
+          where:{
+            created_by:req.user.id
+          },
+          attributes: ["title", "start_time", "end_time", "status"],
 
-             include:{
-                    model:Appointment,
-
-                    attributes:["start_time","end_time","location"],
-                    include:{
-                model:User,
-                as:"creator",
-                attributes:["first_name","last_name","email","id"],
-                 
-                
-            }
-            
-                }
+          include: [
+            {
+              model: User,
+              as: "creator", 
+              attributes: ["first_name", "last_name", "email"],
+            },
+          ],
+        },
+      ],
              
         })
         // console.log(details);
@@ -115,14 +126,11 @@ catch(er){
 
 
 }
- 
 const getReports = async (req, res) => {
   try {
     let { month, startDate, endDate } = req.query;
-
     let where = {};
-
-    // If month filter is provided
+ 
     if (month) {
       let [year, mon] = month.split("-");
       let firstDay = new Date(year, mon - 1, 1);
@@ -131,31 +139,45 @@ const getReports = async (req, res) => {
       where.start_time = { [Op.gte]: firstDay };
       where.end_time = { [Op.lte]: lastDay };
     }
-
-    // If custom range is provided
+ 
     if (startDate && endDate) {
       where.start_time = { [Op.gte]: new Date(startDate) };
       where.end_time = { [Op.lte]: new Date(endDate) };
     }
 
-    // Count scheduled meetings
+ 
     const scheduledMeetings = await Appointment.count({ where });
-
-    // Count by response type
     const acceptedMeetings = await AppointmentAttendees.count({
       include: [{ model: Appointment, where }],
       where: { response: "accepted" },
     });
-
     const declinedMeetings = await AppointmentAttendees.count({
       include: [{ model: Appointment, where }],
       where: { response: "declined" },
     });
-
     const pendingMeetings = await AppointmentAttendees.count({
       include: [{ model: Appointment, where }],
       where: { response: "pending" },
     });
+ 
+    const reportData = [
+      { Metric: "Scheduled Meetings", Count: scheduledMeetings },
+      { Metric: "Accepted Meetings", Count: acceptedMeetings },
+      { Metric: "Declined Meetings", Count: declinedMeetings },
+      { Metric: "Pending Meetings", Count: pendingMeetings },
+    ];
+ 
+    const workbook = xlsx.utils.book_new();
+    const worksheet = xlsx.utils.json_to_sheet(reportData);
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Report");
+
+    const filePath = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      `Report_${Date.now()}.xlsx`
+    );
+    xlsx.writeFile(workbook, filePath);
 
     return res.status(200).json({
       msg: "Report generated successfully",
@@ -163,6 +185,7 @@ const getReports = async (req, res) => {
       acceptedMeetings,
       declinedMeetings,
       pendingMeetings,
+      filePath: `/uploads/${path.basename(filePath)}`,
       filter: month ? { month } : { startDate, endDate },
     });
   } catch (err) {
@@ -170,8 +193,6 @@ const getReports = async (req, res) => {
     return res.status(500).json({ msg: "Internal Server Error", err: err.message });
   }
 };
-
- 
 
 
 

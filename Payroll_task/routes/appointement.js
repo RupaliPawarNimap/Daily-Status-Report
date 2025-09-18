@@ -6,14 +6,14 @@ const { checkPermission } = require("../middleware/checkPermission");
 
 
 
-router.post("/appointements",checkAuth,checkPermission,createAppointment)
+router.post("/appointements",checkAuth, createAppointment)
 router.get("/appointements",getAllApt)
 router.get("/appointements/:id",getAptById)
-router.get("/appointements/filter",getAppointmentsByDate)
+router.get("/appointements/date/filter",checkAuth,checkPermission,getAppointmentsByDate)//only for admin
 router.put("/appointements/:id",updateAppointment)
 router.delete("/appointements/:id",deleteAppointment)
-router.get("/appointements",getAppointementStatus)
-router.get("/appointements/exports",checkAuth,checkPermission,exportAppointments)
+router.get("/appointements/status",getAppointementStatus)
+router.get("/appointements/exports/all",exportAppointments)
 
 
 module.exports=router

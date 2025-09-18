@@ -23,10 +23,11 @@ console.log("DB Connected");
     }
 }
 
-sequelize.sync({alter:false}).then(()=>{
-    console.log("DB Synced");
-}).catch((err)=>{
-    console.log("Failed To Sync",err);
-})
+// sequelize.sync({alter:false}).then(()=>{
+//     console.log("DB Synced");
+// }).catch((err)=>{
+//     console.log("Failed To Sync",err);
+// })
+
 
 module.exports={dbConnect,sequelize}

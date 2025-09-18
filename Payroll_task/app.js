@@ -1,3 +1,4 @@
+Object.keys(require.cache).forEach(key => delete require.cache[key]);
 const express = require('express')
 const app = express()
 const port = 3000

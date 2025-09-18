@@ -5,6 +5,6 @@ const { checkPermission } = require("../middleware/checkPermission");
 const router =express.Router()
 
 router.post("/blocks",checkAuth,blockUser);
-router.get("/blocks",checkAuth,checkPermission,getAllBlockUser)
+router.get("/blocks", checkAuth,getAllBlockUser)
 
 module.exports=router

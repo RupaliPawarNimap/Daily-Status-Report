@@ -165,3 +165,66 @@
  *       500:
  *         description: Internal Server Error
  */
+/**
+ * @swagger
+ * /appointementAttendees/response/{id}:
+ *   put:
+ *     tags:
+ *       - Appointment Attendees
+ *     summary: Update response of an appointment attendee
+ *     description: Updates the response (accepted, declined, pending) of an appointment attendee. Requires Bearer token.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         type: integer
+ *         description: ID of the appointment attendee
+ *         example: 5
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         description: Response status to update
+ *         schema:
+ *           type: object
+ *           required:
+ *             - response
+ *           properties:
+ *             response:
+ *               type: string
+ *               enum: [accepted, declined, pending]
+ *               example: "declined"
+ *     responses:
+ *       200:
+ *         description: Attendee response updated successfully
+ *         schema:
+ *           type: object
+ *           properties:
+ *             statusCode:
+ *               type: integer
+ *               example: 200
+ *             success:
+ *               type: boolean
+ *               example: true
+ *             message:
+ *               type: string
+ *               example: "Attendee response updated successfully"
+ *             data:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 5
+ *                 response:
+ *                   type: string
+ *                   example: "declined"
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Attendee not found
+ *       500:
+ *         description: Internal server error
+ */

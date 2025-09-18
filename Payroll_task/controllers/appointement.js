@@ -7,7 +7,8 @@ const fs = require("fs");
 const xlsx=require("xlsx")
  
  
-const {Appointment,AppointmentAttendees,BlockedUsers,User} =require("../models/index")
+const {Appointment,AppointmentAttendees,BlockedUsers,User} =require("../models/index");
+const { response } = require("express");
  
 const createAppointment = async (req, res) => {
   const t = await sequelize.transaction();  
@@ -73,7 +74,7 @@ if(blockby.length>0){
   const attendeeRecords = attendees.map((user_id) => ({
       user_id,
       appointment_id: appointment.id,
-      status: "pending",  
+      response: "pending",  
     }));
 
     await AppointmentAttendees.bulkCreate(attendeeRecords,{transaction:t});
@@ -93,9 +94,9 @@ if(blockby.length>0){
 const getAllApt=async(req,res)=>{
   try{
     let page =parseInt(req.query.page) ||1
-    let limit =parseInt(req.query.limit)||10
+   let limit =parseInt(req.query.limit)||10
     let offset=(page-1)*limit
-    let details=await Appointment.findAll({limit,offset }
+      let details=await Appointment.findAll({limit,offset }
     )
     if(!details || details.length==0){
       return res.status(400).json({msg:"No Any Appointement Found"})
@@ -144,43 +145,136 @@ const getAppointmentsByDate = async (req, res) => {
     return res.status(500).json({ msg: "Internal Server Error", err: err.message });
   }
 };
+const getAptById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) return res.status(404).json({ msg: "Provide the id" });
 
-const getAptById=async(req,res)=>{
-  try{
- let id =req.params.id
- if(!id){
-  return res.status(404).json({msg:"Provide the id "})
- }
- let details =await Appointment.findOne({where:{
-  id:id},
-  include:[{
-    model:User,
-    as:"creator",
-    attributes:["first_name","last_name","email"],
+    const details = await Appointment.findOne({
+      where: { id },
+      include: [
+        {
+          model: User,
+          as: "creator",
+          attributes: ["first_name", "last_name", "email"],
+        },
+        {
+          model: User,
+          as: "attendees",
+          attributes: ["first_name", "last_name", "email"],
+          through: { attributes: [] },
+          // separate: true, 
+        },
+      ],
+    });
+
+    if (!details) return res.status(404).json({ msg: "No details found" });
+    return res.status(200).json({ msg: "Details fetched successfully", details });
+  } catch (err) {
+    return res.status(500).json({ msg: "Internal Server Error", err: err.message });
+  }
+};
+const updateAppointment = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const id = req.params.id;
+    const userId = req.user.id;  
+
+    const { title, description, start_time, end_time, location, meeting_link, attendees } = req.body;
 
     
-  },{
-    model:User,
-    // as:"users",
-    attributes:["first_name","last_name","email"],
-    through:{attributes:[]}
-  }]
+    const appointment = await Appointment.findByPk(id, { transaction: t });
+    if (!appointment) {
+      await t.rollback();
+      return res.status(404).json({ msg: "Appointment not found" });
+    }
+
     
-});
-if(!details || details.length==0){
-  return res.status(400).json({msg:"No Any Deatils Exist"})
-}
-return res.status(200).json({msg:"Details Fetached Successfully",details:details})
-  }
-   catch(err){
-    return res.status(500).json({msg:"Internal Server Error",err:err.message})
-  }
-}
-
-const updateAppointment=async(req,res)=>{
-
-}
+    if (appointment.created_by !== userId) {
+      await t.rollback();
+      return res.status(403).json({ msg: "You are not allowed to update this appointment" });
+    }
  
+    if (start_time && end_time) {
+      const start = new Date(start_time);
+      const end = new Date(end_time);
+      if (isNaN(start) || isNaN(end)) {
+        await t.rollback();
+        return res.status(400).json({ msg: "Invalid date format for start or end time" });
+      }
+      if (start >= end) {
+        await t.rollback();
+        return res.status(400).json({ msg: "Start time must be before end time" });
+      }
+    }
+ 
+    await appointment.update(
+      { title, description, start_time, end_time, location, meeting_link },
+      { transaction: t }
+    );
+
+ 
+  
+if (attendees && Array.isArray(attendees) && attendees.length > 0) {
+  
+  const existingUsers = await User.findAll({
+    where: { id: attendees },
+    attributes: ["id"],
+    transaction: t,
+  });
+  if (existingUsers.length !== attendees.length) {
+    await t.rollback();
+    return res.status(400).json({ msg: "Some attendee IDs are invalid" });
+  }
+
+ 
+  let blockuser = await BlockedUsers.findAll({
+    where: { blocked_by: userId, blocked_user: attendees },
+    transaction: t,
+  });
+  if (blockuser.length > 0) {
+    await t.rollback();
+    return res.status(400).json({ msg: "You cannot update the appointment with a blocked user" });
+  }
+
+  let blockby = await BlockedUsers.findAll({
+    where: { blocked_user: userId, blocked_by: attendees },
+    transaction: t,
+  });
+  if (blockby.length > 0) {
+    await t.rollback();
+    return res.status(400).json({ msg: "Some attendees have blocked you, so you cannot include them" });
+  }
+
+ 
+  const currentAttendees = await AppointmentAttendees.findAll({
+    where: { appointment_id: appointment.id },
+    attributes: ["user_id"],
+    transaction: t,
+  });
+  const currentIds = currentAttendees.map((a) => a.user_id);
+
+ 
+  const newAttendees = attendees.filter((id) => !currentIds.includes(id));
+
+  if (newAttendees.length > 0) {
+    const newRecords = newAttendees.map((user_id) => ({
+      user_id,
+      appointment_id: appointment.id,
+      status: "pending",
+    }));
+    await AppointmentAttendees.bulkCreate(newRecords, { transaction: t });
+  }
+}
+
+    await t.commit();
+    return res.status(200).json({ msg: "Appointment updated successfully", appointment });
+  } catch (err) {
+    await t.rollback();
+    return res.status(500).json({ msg: "Internal Server Error", error: err.message });
+  }
+};
+
  
 
 const deleteAppointment = async (req, res) => {
@@ -188,7 +282,7 @@ const deleteAppointment = async (req, res) => {
     let deletedAppointment;
     await sequelize.transaction(async(t)=>{
       let id =req.params.id
-      let aptcheck =await Appointment.findByPk(id,{transaction:t});
+      let aptcheck = await Appointment.findOne({ where: { id, created_by: req.user.id }, transaction: t,});
       if(!aptcheck){
         throw { status: 404, message: "Appointment Not Found" };
       }
@@ -238,107 +332,98 @@ deletedAppointment = { appointment: aptcheck, aptDeatils };
    }
 };
 
-const getAppointementStatus=async(req,res)=>{
-  try{
-    let status =req.query.status
-    console.log(status);
-    if(!status){
-      return res.status(404).json({msg:"Provide the Status "})
-    }
-    if(!["completed","cancelled","scheduled"].includes(status)){
-      return res.status(404).json({msg:"Provide Valid Status-Completed ,cancelled,scheduled"})
-    }
-    let appointement=await Appointment.findAll({where:{
-      status:status
-    },
-    include:[{
-      model:User,
-      as:"creator",
-      attributes:["first_name","last_name","email"]
+const getAppointementStatus = async (req, res) => {
+  try {
+    const { status } = req.query;
+    
+    if (!status || !["completed", "cancelled", "scheduled"].includes(status))
+      return res.status(404).json({ msg: "Provide valid status" });
 
-    },{
-      model:User,
-      attributes:["first_name","last_name","email"],
-      through:{
-        attributes:[]
-      }
-    }]
-  })
-    if(!appointement){
-      return res.status(404).json({msg:"Appointment not Exist with that status"})
-    }
-    return res.status(200).json({msg:`Appointment Fetched Successfully for ${status}`,Appointment:appointement})
+    const appointments = await Appointment.findAll({
+      where: { status:status, created_by: req.user.id},
+      include: [
+        { model: User, as: "creator", attributes: ["first_name", "last_name", "email"] },
+        {
+          model: User,
+          as: "attendees",
+          attributes: ["first_name", "last_name", "email"],
+          through: { attributes: [] },
+          // separate: true,
+        },
+      ],
+    });
+console.log(appointments);
+    if (!appointments.length==0) return res.status(404).json({ msg: "No appointments found" });
 
+    return res.status(200).json({ msg: `Appointments fetched for ${status}`, appointments });
+  } catch (err) {
+    return res.status(500).json({ msg: "Internal Server Error", err: err.message });
   }
-   catch(err){
-    return res.status(500).json({msg:"Internal Server Error",err:err.message})
-  }
-}
+};
 
  
  
- 
-
 const exportAppointments = async (req, res) => {
   try {
     let { startDate, endDate, status } = req.query;
-
-    // Build filter object
     let where = {};
+
     if (startDate && endDate) {
       where.start_time = { [Op.gte]: new Date(startDate) };
       where.end_time = { [Op.lte]: new Date(endDate) };
     }
 
-    if (status && ["scheduled", "completed", "cancelled"].includes(status)) {
-      where.status = status;
-    }
- let appointments = await Appointment.findAll({
-  where,
-  include: [
-    {
-      model: User,
-      as: "creator",
-      attributes: ["first_name", "last_name", "email"],
-    },
-    {
-      model: User,
-      as: "attendees", // <-- specify alias here
-      attributes: ["first_name", "last_name", "email"],
-      through: {
-        attributes: ["response", "responded_at"],
-      },
-    },
-  ],
-});
+  if (status) {
+  if (["scheduled", "completed", "cancelled"].includes(status)) {
+    where.status = status;
+  } else {
+    return res.status(400).json({ msg: "Invalid status value" });
+  }
+}
+
+
+    let appointments = await Appointment.findAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: "creator",  
+          attributes: ["first_name", "last_name", "email"],
+        },
+        {
+          model: User,
+          as: "attendees",  
+          attributes: ["first_name", "last_name", "email"],
+          through: { attributes: ["response", "responded_at"] },
+          
+        },
+      ],
+    });
 
     if (!appointments || appointments.length === 0) {
       return res.status(404).json({ msg: "No appointments found for given filter" });
     }
 
-    // Convert appointments data into CSV-friendly format
     let data = [];
-appointments.forEach((apt) => {
-  apt.attendees.forEach((attendee) => { // <-- use 'attendees'
-    data.push({
-      appointment_id: apt.id,
-      title: apt.title,
-      start_time: apt.start_time,
-      end_time: apt.end_time,
-      status: apt.status,
-      location: apt.location,
-      meeting_link: apt.meeting_link,
-      creator_name: `${apt.creator.first_name} ${apt.creator.last_name}`,
-      attendee_name: `${attendee.first_name} ${attendee.last_name}`,
-      attendee_email: attendee.email,
-      response: attendee.AppointmentAttendees.response,
-      responded_at: attendee.AppointmentAttendees.responded_at,
+    appointments.forEach((apt) => {
+      apt.attendees.forEach((attendee) => {
+        data.push({
+          appointment_id: apt.id,
+          title: apt.title,
+          start_time: apt.start_time,
+          end_time: apt.end_time,
+          status: apt.status,
+          location: apt.location,
+          meeting_link: apt.meeting_link,
+          creator_name: `${apt.creator.first_name} ${apt.creator.last_name}`,
+          attendee_name: `${attendee.first_name} ${attendee.last_name}`,
+          attendee_email: attendee.email,
+          response: attendee.AppointmentAttendees.response,
+          responded_at: attendee.AppointmentAttendees.responded_at,
+        });
+      });
     });
-  });
-});
 
-
-    // Create Excel file
     const workbook = xlsx.utils.book_new();
     const worksheet = xlsx.utils.json_to_sheet(data);
     xlsx.utils.book_append_sheet(workbook, worksheet, "Appointments");
@@ -357,7 +442,6 @@ appointments.forEach((apt) => {
   }
 };
 
- 
 
 
 module.exports = { createAppointment ,getAllApt,getAptById,exportAppointments,getAppointmentsByDate,deleteAppointment,updateAppointment,getAppointementStatus};

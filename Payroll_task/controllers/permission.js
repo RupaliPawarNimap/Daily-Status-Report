@@ -1,4 +1,4 @@
-const {Permission} =require("../models/permission");
+const {Permission} =require("../models/index");
 
 const createPermission=async(req,res)=>{
     try{

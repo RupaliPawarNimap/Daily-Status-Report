@@ -6,7 +6,7 @@ const { checkPermission } = require("../middleware/checkPermission");
 
 
 
-router.get("/appointementAttendees",checkAuth,checkPermission,getAppointementDetails);
+router.get("/appointementAttendees",checkAuth,getAppointementDetails);
 router.put("/appointementAttendees/response/:id",checkAuth,updateappointementResponse);
 router.get("/appointementAttendees/response",checkAuth,getresponseOfAttendee)
 router.get("/appointementAttendees/reports", checkAuth, getReports);
